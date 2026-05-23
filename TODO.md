@@ -53,7 +53,7 @@ Markdown compatibility.
 
 ## Phase 5: Inline Parsing
 
-- [ ] Parse inline code using single backticks.
+- [x] Parse inline code using single backticks.
   - Learning: scanning within a line.
 - [ ] Parse emphasis with `*text*`.
   - Learning: delimiter matching and edge cases.
@@ -62,6 +62,7 @@ Markdown compatibility.
 - [ ] Parse links with `[text](url)`.
   - Learning: nested scanning and validation.
 - [ ] Add focused tests for each inline feature.
+  - Progress: inline code tests added.
 
 ## Phase 6: Tokenizer Basics
 

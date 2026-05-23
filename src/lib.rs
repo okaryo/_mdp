@@ -35,7 +35,7 @@ pub fn parse(markdown: &str) -> String {
 
             while index < lines.len() {
                 if let Some(item) = lines[index].strip_prefix("- ") {
-                    items.push(format!("<li>{}</li>", escape_html(item)));
+                    items.push(format!("<li>{}</li>", render_inline(item)));
                     index += 1;
                 } else {
                     break;
@@ -48,7 +48,7 @@ pub fn parse(markdown: &str) -> String {
 
             while index < lines.len() {
                 if let Some(item) = ordered_list_item_content(lines[index]) {
-                    items.push(format!("<li>{}</li>", escape_html(item)));
+                    items.push(format!("<li>{}</li>", render_inline(item)));
                     index += 1;
                 } else {
                     break;
@@ -61,7 +61,7 @@ pub fn parse(markdown: &str) -> String {
 
             while index < lines.len() {
                 if let Some(quote) = lines[index].strip_prefix("> ") {
-                    quoted_lines.push(escape_html(quote));
+                    quoted_lines.push(render_inline(quote));
                     index += 1;
                 } else {
                     break;
@@ -93,14 +93,38 @@ fn ordered_list_item_content(line: &str) -> Option<&str> {
 
 fn parse_line(line: &str) -> String {
     if let Some(heading) = line.strip_prefix("### ") {
-        format!("<h3>{}</h3>", escape_html(heading))
+        format!("<h3>{}</h3>", render_inline(heading))
     } else if let Some(heading) = line.strip_prefix("## ") {
-        format!("<h2>{}</h2>", escape_html(heading))
+        format!("<h2>{}</h2>", render_inline(heading))
     } else if let Some(heading) = line.strip_prefix("# ") {
-        format!("<h1>{}</h1>", escape_html(heading))
+        format!("<h1>{}</h1>", render_inline(heading))
     } else {
-        format!("<p>{}</p>", escape_html(line))
+        format!("<p>{}</p>", render_inline(line))
     }
+}
+
+fn render_inline(text: &str) -> String {
+    let mut rendered = String::new();
+    let mut remaining = text;
+
+    while let Some(start) = remaining.find('`') {
+        rendered.push_str(&escape_html(&remaining[..start]));
+        remaining = &remaining[start + 1..];
+
+        if let Some(end) = remaining.find('`') {
+            rendered.push_str("<code>");
+            rendered.push_str(&escape_html(&remaining[..end]));
+            rendered.push_str("</code>");
+            remaining = &remaining[end + 1..];
+        } else {
+            rendered.push_str("`");
+            rendered.push_str(&escape_html(remaining));
+            return rendered;
+        }
+    }
+
+    rendered.push_str(&escape_html(remaining));
+    rendered
 }
 
 fn escape_html(text: &str) -> String {
@@ -247,5 +271,29 @@ let value = 1 < 2;
         let expected = "<pre><code>let value = 1 &lt; 2;\n# Not a heading</code></pre>";
 
         assert_eq!(parse(input), expected);
+    }
+
+    #[test]
+    fn renders_inline_code_in_paragraph() {
+        assert_eq!(
+            parse("Use `cargo test` often"),
+            "<p>Use <code>cargo test</code> often</p>"
+        );
+    }
+
+    #[test]
+    fn renders_inline_code_in_heading() {
+        assert_eq!(
+            parse("# Use `cargo test`"),
+            "<h1>Use <code>cargo test</code></h1>"
+        );
+    }
+
+    #[test]
+    fn escapes_html_inside_inline_code() {
+        assert_eq!(
+            parse("Use `<tag>` as text"),
+            "<p>Use <code>&lt;tag&gt;</code> as text</p>"
+        );
     }
 }
