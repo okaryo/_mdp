@@ -4,6 +4,10 @@
 pub fn parse(markdown: &str) -> String {
     if markdown.is_empty() {
         String::new()
+    } else if let Some(heading) = markdown.strip_prefix("### ") {
+        format!("<h3>{}</h3>", escape_html(heading))
+    } else if let Some(heading) = markdown.strip_prefix("## ") {
+        format!("<h2>{}</h2>", escape_html(heading))
     } else if let Some(heading) = markdown.strip_prefix("# ") {
         format!("<h1>{}</h1>", escape_html(heading))
     } else {
@@ -51,5 +55,15 @@ mod tests {
     #[test]
     fn renders_level_1_heading() {
         assert_eq!(parse("# Hello, Markdown!"), "<h1>Hello, Markdown!</h1>");
+    }
+
+    #[test]
+    fn renders_level_2_heading() {
+        assert_eq!(parse("## Hello, Markdown!"), "<h2>Hello, Markdown!</h2>");
+    }
+
+    #[test]
+    fn renders_level_3_heading() {
+        assert_eq!(parse("### Hello, Markdown!"), "<h3>Hello, Markdown!</h3>");
     }
 }
