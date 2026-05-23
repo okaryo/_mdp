@@ -32,13 +32,14 @@ Markdown compatibility.
 
 ## Phase 3: Lists and Quotes
 
-- [ ] Parse unordered list items beginning with `- `.
+- [x] Parse unordered list items beginning with `- `.
   - Learning: collecting related lines into one HTML element.
 - [ ] Parse ordered list items beginning with `1. `, `2. `, etc.
   - Learning: simple prefix detection and parser limitations.
 - [ ] Parse block quotes beginning with `> `.
   - Learning: block-level syntax with stripped prefixes.
 - [ ] Add tests for lists, quotes, and surrounding paragraphs.
+  - Progress: unordered list tests added.
 
 ## Phase 4: Code Blocks
 

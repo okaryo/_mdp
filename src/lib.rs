@@ -3,14 +3,36 @@
 /// Plain text is currently rendered as a single HTML paragraph.
 pub fn parse(markdown: &str) -> String {
     if markdown.is_empty() {
-        String::new()
-    } else {
-        markdown
-            .lines()
-            .map(parse_line)
-            .collect::<Vec<_>>()
-            .join("\n")
+        return String::new();
     }
+
+    let lines = markdown.lines().collect::<Vec<_>>();
+    let mut blocks = Vec::new();
+    let mut index = 0;
+
+    while index < lines.len() {
+        let line = lines[index];
+
+        if line.strip_prefix("- ").is_some() {
+            let mut items = Vec::new();
+
+            while index < lines.len() {
+                if let Some(item) = lines[index].strip_prefix("- ") {
+                    items.push(format!("<li>{}</li>", escape_html(item)));
+                    index += 1;
+                } else {
+                    break;
+                }
+            }
+
+            blocks.push(format!("<ul>{}</ul>", items.join("")));
+        } else {
+            blocks.push(parse_line(line));
+            index += 1;
+        }
+    }
+
+    blocks.join("\n")
 }
 
 fn parse_line(line: &str) -> String {
@@ -82,6 +104,22 @@ mod tests {
         assert_eq!(
             parse("# Title\nHello, Markdown!"),
             "<h1>Title</h1>\n<p>Hello, Markdown!</p>"
+        );
+    }
+
+    #[test]
+    fn renders_unordered_list() {
+        assert_eq!(
+            parse("- Apples\n- Oranges"),
+            "<ul><li>Apples</li><li>Oranges</li></ul>"
+        );
+    }
+
+    #[test]
+    fn renders_unordered_list_with_surrounding_blocks() {
+        assert_eq!(
+            parse("# Groceries\n- Apples\n- Oranges\nDone"),
+            "<h1>Groceries</h1>\n<ul><li>Apples</li><li>Oranges</li></ul>\n<p>Done</p>"
         );
     }
 }
