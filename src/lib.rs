@@ -13,7 +13,24 @@ pub fn parse(markdown: &str) -> String {
     while index < lines.len() {
         let line = lines[index];
 
-        if line.strip_prefix("- ").is_some() {
+        if line == "```" {
+            index += 1;
+            let mut code_lines = Vec::new();
+
+            while index < lines.len() && lines[index] != "```" {
+                code_lines.push(lines[index]);
+                index += 1;
+            }
+
+            if index < lines.len() {
+                index += 1;
+            }
+
+            blocks.push(format!(
+                "<pre><code>{}</code></pre>",
+                escape_html(&code_lines.join("\n"))
+            ));
+        } else if line.strip_prefix("- ").is_some() {
             let mut items = Vec::new();
 
             while index < lines.len() {
@@ -192,5 +209,32 @@ mod tests {
             parse("# Note\n> Stay focused\n> Keep learning\nDone"),
             "<h1>Note</h1>\n<blockquote><p>Stay focused\nKeep learning</p></blockquote>\n<p>Done</p>"
         );
+    }
+
+    #[test]
+    fn renders_fenced_code_block() {
+        let input = r#"```
+fn main() {
+    println!("Hello");
+}
+```"#;
+
+        let expected = r#"<pre><code>fn main() {
+    println!("Hello");
+}</code></pre>"#;
+
+        assert_eq!(parse(input), expected);
+    }
+
+    #[test]
+    fn does_not_parse_markdown_inside_fenced_code_block() {
+        let input = r#"```
+# Not a heading
+- Not a list item
+```"#;
+
+        let expected = "<pre><code># Not a heading\n- Not a list item</code></pre>";
+
+        assert_eq!(parse(input), expected);
     }
 }

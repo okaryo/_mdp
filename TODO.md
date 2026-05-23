@@ -44,11 +44,12 @@ Markdown compatibility.
 
 ## Phase 4: Code Blocks
 
-- [ ] Parse fenced code blocks using triple backticks.
+- [x] Parse fenced code blocks using triple backticks.
   - Learning: parser state and multi-line blocks.
-- [ ] Preserve code block content without inline parsing.
+- [x] Preserve code block content without inline parsing.
   - Learning: separating raw text handling from normal Markdown handling.
 - [ ] Add tests for code blocks and unterminated fences.
+  - Progress: closed fenced code block tests added.
 
 ## Phase 5: Inline Parsing
 
