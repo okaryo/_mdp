@@ -48,8 +48,8 @@ Markdown compatibility.
   - Learning: parser state and multi-line blocks.
 - [x] Preserve code block content without inline parsing.
   - Learning: separating raw text handling from normal Markdown handling.
-- [ ] Add tests for code blocks and unterminated fences.
-  - Progress: closed fenced code block tests added.
+- [x] Add tests for code blocks and unterminated fences.
+  - Decision: an unterminated fenced code block is treated as code until the end of input.
 
 ## Phase 5: Inline Parsing
 

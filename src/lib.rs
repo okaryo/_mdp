@@ -237,4 +237,15 @@ fn main() {
 
         assert_eq!(parse(input), expected);
     }
+
+    #[test]
+    fn treats_unterminated_fenced_code_block_as_code_until_end_of_input() {
+        let input = r#"```
+let value = 1 < 2;
+# Not a heading"#;
+
+        let expected = "<pre><code>let value = 1 &lt; 2;\n# Not a heading</code></pre>";
+
+        assert_eq!(parse(input), expected);
+    }
 }
