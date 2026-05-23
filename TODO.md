@@ -37,10 +37,10 @@ Markdown compatibility.
   - Decision: list nesting is not supported yet; lists are depth 1 for now.
 - [x] Parse ordered list items beginning with `1. `, `2. `, etc.
   - Learning: `split_once`, digit checks, and parser limitations.
-- [ ] Parse block quotes beginning with `> `.
+- [x] Parse block quotes beginning with `> `.
   - Learning: block-level syntax with stripped prefixes.
-- [ ] Add tests for lists, quotes, and surrounding paragraphs.
-  - Progress: unordered and ordered list tests added.
+- [x] Add tests for lists, quotes, and surrounding paragraphs.
+  - Progress: unordered list, ordered list, and block quote tests added.
 
 ## Phase 4: Code Blocks
 

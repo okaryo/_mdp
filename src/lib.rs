@@ -39,6 +39,22 @@ pub fn parse(markdown: &str) -> String {
             }
 
             blocks.push(format!("<ol>{}</ol>", items.join("")));
+        } else if line.strip_prefix("> ").is_some() {
+            let mut quoted_lines = Vec::new();
+
+            while index < lines.len() {
+                if let Some(quote) = lines[index].strip_prefix("> ") {
+                    quoted_lines.push(escape_html(quote));
+                    index += 1;
+                } else {
+                    break;
+                }
+            }
+
+            blocks.push(format!(
+                "<blockquote><p>{}</p></blockquote>",
+                quoted_lines.join("\n")
+            ));
         } else {
             blocks.push(parse_line(line));
             index += 1;
@@ -159,6 +175,22 @@ mod tests {
         assert_eq!(
             parse("# Steps\n1. Read\n2. Write\nDone"),
             "<h1>Steps</h1>\n<ol><li>Read</li><li>Write</li></ol>\n<p>Done</p>"
+        );
+    }
+
+    #[test]
+    fn renders_block_quote() {
+        assert_eq!(
+            parse("> Stay focused\n> Keep learning"),
+            "<blockquote><p>Stay focused\nKeep learning</p></blockquote>"
+        );
+    }
+
+    #[test]
+    fn renders_block_quote_with_surrounding_blocks() {
+        assert_eq!(
+            parse("# Note\n> Stay focused\n> Keep learning\nDone"),
+            "<h1>Note</h1>\n<blockquote><p>Stay focused\nKeep learning</p></blockquote>\n<p>Done</p>"
         );
     }
 }
