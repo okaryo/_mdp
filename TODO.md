@@ -22,8 +22,8 @@ Markdown compatibility.
 
 ## Phase 2: Simple Block Parsing
 
-- [ ] Parse level 1 headings with `# heading`.
-  - Learning: `starts_with`, trimming, and string slicing.
+- [x] Parse level 1 headings with `# heading`.
+  - Learning: `strip_prefix`, branching, and reusing escaping logic.
 - [ ] Parse level 2 and level 3 headings.
   - Learning: small branching logic and validation.
 - [ ] Parse multiple lines into separate blocks.

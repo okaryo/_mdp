@@ -4,6 +4,8 @@
 pub fn parse(markdown: &str) -> String {
     if markdown.is_empty() {
         String::new()
+    } else if let Some(heading) = markdown.strip_prefix("# ") {
+        format!("<h1>{}</h1>", escape_html(heading))
     } else {
         format!("<p>{}</p>", escape_html(markdown))
     }
@@ -40,6 +42,14 @@ mod tests {
 
     #[test]
     fn escapes_html_sensitive_characters() {
-        assert_eq!(parse("Hello <Rust> & Markdown"), "<p>Hello &lt;Rust&gt; &amp; Markdown</p>");
+        assert_eq!(
+            parse("Hello <Rust> & Markdown"),
+            "<p>Hello &lt;Rust&gt; &amp; Markdown</p>"
+        );
+    }
+
+    #[test]
+    fn renders_level_1_heading() {
+        assert_eq!(parse("# Hello, Markdown!"), "<h1>Hello, Markdown!</h1>");
     }
 }
