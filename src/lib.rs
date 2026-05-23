@@ -26,6 +26,19 @@ pub fn parse(markdown: &str) -> String {
             }
 
             blocks.push(format!("<ul>{}</ul>", items.join("")));
+        } else if ordered_list_item_content(line).is_some() {
+            let mut items = Vec::new();
+
+            while index < lines.len() {
+                if let Some(item) = ordered_list_item_content(lines[index]) {
+                    items.push(format!("<li>{}</li>", escape_html(item)));
+                    index += 1;
+                } else {
+                    break;
+                }
+            }
+
+            blocks.push(format!("<ol>{}</ol>", items.join("")));
         } else {
             blocks.push(parse_line(line));
             index += 1;
@@ -33,6 +46,16 @@ pub fn parse(markdown: &str) -> String {
     }
 
     blocks.join("\n")
+}
+
+fn ordered_list_item_content(line: &str) -> Option<&str> {
+    let (number, item) = line.split_once(". ")?;
+
+    if !number.is_empty() && number.chars().all(|character| character.is_ascii_digit()) {
+        Some(item)
+    } else {
+        None
+    }
 }
 
 fn parse_line(line: &str) -> String {
@@ -120,6 +143,22 @@ mod tests {
         assert_eq!(
             parse("# Groceries\n- Apples\n- Oranges\nDone"),
             "<h1>Groceries</h1>\n<ul><li>Apples</li><li>Oranges</li></ul>\n<p>Done</p>"
+        );
+    }
+
+    #[test]
+    fn renders_ordered_list() {
+        assert_eq!(
+            parse("1. First\n2. Second"),
+            "<ol><li>First</li><li>Second</li></ol>"
+        );
+    }
+
+    #[test]
+    fn renders_ordered_list_with_surrounding_blocks() {
+        assert_eq!(
+            parse("# Steps\n1. Read\n2. Write\nDone"),
+            "<h1>Steps</h1>\n<ol><li>Read</li><li>Write</li></ol>\n<p>Done</p>"
         );
     }
 }

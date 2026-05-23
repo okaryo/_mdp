@@ -34,12 +34,13 @@ Markdown compatibility.
 
 - [x] Parse unordered list items beginning with `- `.
   - Learning: collecting related lines into one HTML element.
-- [ ] Parse ordered list items beginning with `1. `, `2. `, etc.
-  - Learning: simple prefix detection and parser limitations.
+  - Decision: list nesting is not supported yet; lists are depth 1 for now.
+- [x] Parse ordered list items beginning with `1. `, `2. `, etc.
+  - Learning: `split_once`, digit checks, and parser limitations.
 - [ ] Parse block quotes beginning with `> `.
   - Learning: block-level syntax with stripped prefixes.
 - [ ] Add tests for lists, quotes, and surrounding paragraphs.
-  - Progress: unordered list tests added.
+  - Progress: unordered and ordered list tests added.
 
 ## Phase 4: Code Blocks
 
