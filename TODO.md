@@ -26,9 +26,9 @@ Markdown compatibility.
   - Learning: `strip_prefix`, branching, and reusing escaping logic.
 - [x] Parse level 2 and level 3 headings.
   - Learning: small branching logic and checking longer prefixes first.
-- [ ] Parse multiple lines into separate blocks.
+- [x] Parse multiple lines into separate blocks.
   - Learning: line iteration with `lines()`.
-- [ ] Add tests for headings, paragraphs, and mixed input.
+- [x] Add tests for headings, paragraphs, and mixed input.
 
 ## Phase 3: Lists and Quotes
 

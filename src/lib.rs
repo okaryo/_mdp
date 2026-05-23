@@ -4,14 +4,24 @@
 pub fn parse(markdown: &str) -> String {
     if markdown.is_empty() {
         String::new()
-    } else if let Some(heading) = markdown.strip_prefix("### ") {
+    } else {
+        markdown
+            .lines()
+            .map(parse_line)
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
+}
+
+fn parse_line(line: &str) -> String {
+    if let Some(heading) = line.strip_prefix("### ") {
         format!("<h3>{}</h3>", escape_html(heading))
-    } else if let Some(heading) = markdown.strip_prefix("## ") {
+    } else if let Some(heading) = line.strip_prefix("## ") {
         format!("<h2>{}</h2>", escape_html(heading))
-    } else if let Some(heading) = markdown.strip_prefix("# ") {
+    } else if let Some(heading) = line.strip_prefix("# ") {
         format!("<h1>{}</h1>", escape_html(heading))
     } else {
-        format!("<p>{}</p>", escape_html(markdown))
+        format!("<p>{}</p>", escape_html(line))
     }
 }
 
@@ -65,5 +75,13 @@ mod tests {
     #[test]
     fn renders_level_3_heading() {
         assert_eq!(parse("### Hello, Markdown!"), "<h3>Hello, Markdown!</h3>");
+    }
+
+    #[test]
+    fn renders_multiple_lines_as_separate_blocks() {
+        assert_eq!(
+            parse("# Title\nHello, Markdown!"),
+            "<h1>Title</h1>\n<p>Hello, Markdown!</p>"
+        );
     }
 }
