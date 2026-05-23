@@ -6,10 +6,11 @@ Markdown compatibility.
 
 ## Phase 0: Project Setup
 
-- [ ] Create a minimal Rust project structure.
-- [ ] Add a basic parser entry point.
-- [ ] Add a basic test structure.
-- [ ] Decide the first public API shape.
+- [x] Create a minimal Rust project structure.
+- [x] Add a basic parser entry point.
+- [x] Add a basic test structure.
+- [x] Decide the first public API shape.
+  - Decision: start with `parse(markdown: &str) -> String`.
 
 ## Phase 1: First HTML Output
 
