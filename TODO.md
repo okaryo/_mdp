@@ -14,7 +14,7 @@ Markdown compatibility.
 
 ## Phase 1: First HTML Output
 
-- [ ] Convert plain text into a paragraph.
+- [x] Convert plain text into a paragraph.
   - Learning: basic function design, `&str`, `String`, and `format!`.
 - [ ] Escape HTML-sensitive characters in text.
   - Learning: character iteration and safe output.

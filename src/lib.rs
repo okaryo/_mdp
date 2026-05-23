@@ -1,10 +1,12 @@
 /// Converts Markdown input into HTML output.
 ///
-/// Phase 0 only establishes the public entry point, so non-empty input is
-/// temporarily returned unchanged. Actual Markdown behavior will be added one
-/// small step at a time.
+/// Plain text is currently rendered as a single HTML paragraph.
 pub fn parse(markdown: &str) -> String {
-    markdown.to_string()
+    if markdown.is_empty() {
+        String::new()
+    } else {
+        format!("<p>{markdown}</p>")
+    }
 }
 
 #[cfg(test)]
@@ -14,5 +16,10 @@ mod tests {
     #[test]
     fn parses_empty_document() {
         assert_eq!(parse(""), "");
+    }
+
+    #[test]
+    fn renders_plain_text_as_a_paragraph() {
+        assert_eq!(parse("Hello, Markdown!"), "<p>Hello, Markdown!</p>");
     }
 }
