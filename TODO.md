@@ -16,9 +16,9 @@ Markdown compatibility.
 
 - [x] Convert plain text into a paragraph.
   - Learning: basic function design, `&str`, `String`, and `format!`.
-- [ ] Escape HTML-sensitive characters in text.
+- [x] Escape HTML-sensitive characters in text.
   - Learning: character iteration and safe output.
-- [ ] Add tests for paragraph rendering and escaping.
+- [x] Add tests for paragraph rendering and escaping.
 
 ## Phase 2: Simple Block Parsing
 
