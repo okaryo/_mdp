@@ -78,7 +78,7 @@ Markdown compatibility.
 
 - [x] Introduce simple block node types when string-only parsing becomes awkward.
   - Learning: enums and data modeling in Rust.
-- [ ] Introduce simple inline node types for text, code, emphasis, strong emphasis, and links.
+- [x] Introduce simple inline node types for text, code, emphasis, strong emphasis, and links.
   - Learning: nested data structures.
 - [ ] Separate block parsing from inline parsing.
   - Learning: module boundaries and parser responsibilities.

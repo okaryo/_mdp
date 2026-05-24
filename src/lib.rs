@@ -161,26 +161,46 @@ fn render_block(block: &BlockNode<'_>) -> String {
 }
 
 fn render_inline(text: &str) -> String {
-    let mut rendered = String::new();
+    render_inline_nodes(&parse_inline_nodes(text))
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum InlineNode<'a> {
+    Text(&'a str),
+    Code(String),
+    Emphasis(Vec<InlineNode<'a>>),
+    Strong(Vec<InlineNode<'a>>),
+    Link {
+        label: Vec<InlineNode<'a>>,
+        url: &'a str,
+    },
+}
+
+fn parse_inline_nodes(text: &str) -> Vec<InlineNode<'_>> {
+    let mut nodes = Vec::new();
     let mut remaining = text;
 
     while let Some((start, delimiter)) = find_next_inline_delimiter(remaining) {
-        rendered.push_str(&escape_html(&remaining[..start]));
+        if start > 0 {
+            nodes.push(InlineNode::Text(&remaining[..start]));
+        }
 
         match delimiter {
             '`' => {
                 let inline_code_input = &remaining[start..];
 
-                if let Some((html, consumed_len)) =
+                if let Some((inline_node, consumed_len)) =
                     render_inline_code_from_tokens(inline_code_input)
                 {
-                    rendered.push_str(&html);
+                    nodes.push(inline_node);
                     remaining = &remaining[start + consumed_len..];
                 } else {
-                    rendered.push_str("`");
+                    nodes.push(InlineNode::Text("`"));
                     remaining = &remaining[start + 1..];
-                    rendered.push_str(&escape_html(remaining));
-                    return rendered;
+                    if !remaining.is_empty() {
+                        nodes.push(InlineNode::Text(remaining));
+                    }
+                    return nodes;
                 }
             }
             '*' => {
@@ -188,27 +208,27 @@ fn render_inline(text: &str) -> String {
                     remaining = &remaining[start + 2..];
 
                     if let Some(end) = remaining.find("**") {
-                        rendered.push_str("<strong>");
-                        rendered.push_str(&escape_html(&remaining[..end]));
-                        rendered.push_str("</strong>");
+                        nodes.push(InlineNode::Strong(parse_inline_nodes(&remaining[..end])));
                         remaining = &remaining[end + 2..];
                     } else {
-                        rendered.push_str("**");
-                        rendered.push_str(&escape_html(remaining));
-                        return rendered;
+                        nodes.push(InlineNode::Text("**"));
+                        if !remaining.is_empty() {
+                            nodes.push(InlineNode::Text(remaining));
+                        }
+                        return nodes;
                     }
                 } else {
                     remaining = &remaining[start + 1..];
 
                     if let Some(end) = remaining.find('*') {
-                        rendered.push_str("<em>");
-                        rendered.push_str(&escape_html(&remaining[..end]));
-                        rendered.push_str("</em>");
+                        nodes.push(InlineNode::Emphasis(parse_inline_nodes(&remaining[..end])));
                         remaining = &remaining[end + 1..];
                     } else {
-                        rendered.push_str("*");
-                        rendered.push_str(&escape_html(remaining));
-                        return rendered;
+                        nodes.push(InlineNode::Text("*"));
+                        if !remaining.is_empty() {
+                            nodes.push(InlineNode::Text(remaining));
+                        }
+                        return nodes;
                     }
                 }
             }
@@ -221,28 +241,68 @@ fn render_inline(text: &str) -> String {
 
                     if let Some(url_end) = after_label.find(')') {
                         let url = &after_label[..url_end];
-                        rendered.push_str("<a href=\"");
-                        rendered.push_str(&escape_html_attribute(url));
-                        rendered.push_str("\">");
-                        rendered.push_str(&escape_html(label));
-                        rendered.push_str("</a>");
+                        nodes.push(InlineNode::Link {
+                            label: parse_inline_nodes(label),
+                            url,
+                        });
                         remaining = &after_label[url_end + 1..];
                     } else {
-                        rendered.push_str("[");
-                        rendered.push_str(&escape_html(remaining));
-                        return rendered;
+                        nodes.push(InlineNode::Text("["));
+                        if !remaining.is_empty() {
+                            nodes.push(InlineNode::Text(remaining));
+                        }
+                        return nodes;
                     }
                 } else {
-                    rendered.push_str("[");
-                    rendered.push_str(&escape_html(remaining));
-                    return rendered;
+                    nodes.push(InlineNode::Text("["));
+                    if !remaining.is_empty() {
+                        nodes.push(InlineNode::Text(remaining));
+                    }
+                    return nodes;
                 }
             }
             _ => unreachable!("only configured inline delimiters are returned"),
         }
     }
 
-    rendered.push_str(&escape_html(remaining));
+    if !remaining.is_empty() {
+        nodes.push(InlineNode::Text(remaining));
+    }
+
+    nodes
+}
+
+fn render_inline_nodes(nodes: &[InlineNode<'_>]) -> String {
+    let mut rendered = String::new();
+
+    for node in nodes {
+        match node {
+            InlineNode::Text(text) => rendered.push_str(&escape_html(text)),
+            InlineNode::Code(code) => {
+                rendered.push_str("<code>");
+                rendered.push_str(&escape_html(code));
+                rendered.push_str("</code>");
+            }
+            InlineNode::Emphasis(children) => {
+                rendered.push_str("<em>");
+                rendered.push_str(&render_inline_nodes(children));
+                rendered.push_str("</em>");
+            }
+            InlineNode::Strong(children) => {
+                rendered.push_str("<strong>");
+                rendered.push_str(&render_inline_nodes(children));
+                rendered.push_str("</strong>");
+            }
+            InlineNode::Link { label, url } => {
+                rendered.push_str("<a href=\"");
+                rendered.push_str(&escape_html_attribute(url));
+                rendered.push_str("\">");
+                rendered.push_str(&render_inline_nodes(label));
+                rendered.push_str("</a>");
+            }
+        }
+    }
+
     rendered
 }
 
@@ -294,7 +354,7 @@ fn tokenize_inline(text: &str) -> Vec<InlineToken<'_>> {
     tokens
 }
 
-fn render_inline_code_from_tokens(text: &str) -> Option<(String, usize)> {
+fn render_inline_code_from_tokens(text: &str) -> Option<(InlineNode<'_>, usize)> {
     let tokens = tokenize_inline(text);
 
     if !matches!(tokens.first(), Some(InlineToken::Backtick)) {
@@ -308,7 +368,7 @@ fn render_inline_code_from_tokens(text: &str) -> Option<(String, usize)> {
         match token {
             InlineToken::Backtick => {
                 consumed_len += 1;
-                return Some((format!("<code>{}</code>", escape_html(&code)), consumed_len));
+                return Some((InlineNode::Code(code), consumed_len));
             }
             InlineToken::End => return None,
             _ => {
@@ -662,6 +722,24 @@ let value = 1 < 2;
                 InlineToken::Text("楽しい"),
                 InlineToken::Star,
                 InlineToken::End,
+            ]
+        );
+    }
+
+    #[test]
+    fn parses_inline_nodes() {
+        assert_eq!(
+            parse_inline_nodes("Use `cargo` and **Rust** at [site](https://example.com)"),
+            vec![
+                InlineNode::Text("Use "),
+                InlineNode::Code("cargo".to_string()),
+                InlineNode::Text(" and "),
+                InlineNode::Strong(vec![InlineNode::Text("Rust")]),
+                InlineNode::Text(" at "),
+                InlineNode::Link {
+                    label: vec![InlineNode::Text("site")],
+                    url: "https://example.com",
+                },
             ]
         );
     }
