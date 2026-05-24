@@ -70,6 +70,20 @@ Markdown text
   -> HTML string
 ```
 
+## CLI Usage
+
+Parse Markdown from a file:
+
+```bash
+cargo run -- input.md
+```
+
+Parse Markdown from standard input:
+
+```bash
+echo '# Hello' | cargo run
+```
+
 ## Learning Style
 
 This project should move in very small steps. Each step should define:
