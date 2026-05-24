@@ -154,6 +154,32 @@ fn render_inline(text: &str) -> String {
                     }
                 }
             }
+            '[' => {
+                remaining = &remaining[start + 1..];
+
+                if let Some(label_end) = remaining.find("](") {
+                    let label = &remaining[..label_end];
+                    let after_label = &remaining[label_end + 2..];
+
+                    if let Some(url_end) = after_label.find(')') {
+                        let url = &after_label[..url_end];
+                        rendered.push_str("<a href=\"");
+                        rendered.push_str(&escape_html_attribute(url));
+                        rendered.push_str("\">");
+                        rendered.push_str(&escape_html(label));
+                        rendered.push_str("</a>");
+                        remaining = &after_label[url_end + 1..];
+                    } else {
+                        rendered.push_str("[");
+                        rendered.push_str(&escape_html(remaining));
+                        return rendered;
+                    }
+                } else {
+                    rendered.push_str("[");
+                    rendered.push_str(&escape_html(remaining));
+                    return rendered;
+                }
+            }
             _ => unreachable!("only configured inline delimiters are returned"),
         }
     }
@@ -164,7 +190,7 @@ fn render_inline(text: &str) -> String {
 
 fn find_next_inline_delimiter(text: &str) -> Option<(usize, char)> {
     text.char_indices()
-        .find(|(_, character)| matches!(character, '`' | '*'))
+        .find(|(_, character)| matches!(character, '`' | '*' | '['))
 }
 
 fn escape_html(text: &str) -> String {
@@ -173,6 +199,22 @@ fn escape_html(text: &str) -> String {
     for character in text.chars() {
         match character {
             '&' => escaped.push_str("&amp;"),
+            '<' => escaped.push_str("&lt;"),
+            '>' => escaped.push_str("&gt;"),
+            _ => escaped.push(character),
+        }
+    }
+
+    escaped
+}
+
+fn escape_html_attribute(text: &str) -> String {
+    let mut escaped = String::new();
+
+    for character in text.chars() {
+        match character {
+            '&' => escaped.push_str("&amp;"),
+            '"' => escaped.push_str("&quot;"),
             '<' => escaped.push_str("&lt;"),
             '>' => escaped.push_str("&gt;"),
             _ => escaped.push(character),
@@ -376,6 +418,30 @@ let value = 1 < 2;
         assert_eq!(
             parse("Keep **learning** and *practicing*"),
             "<p>Keep <strong>learning</strong> and <em>practicing</em></p>"
+        );
+    }
+
+    #[test]
+    fn renders_link_in_paragraph() {
+        assert_eq!(
+            parse("Visit [Rust](https://www.rust-lang.org/)"),
+            "<p>Visit <a href=\"https://www.rust-lang.org/\">Rust</a></p>"
+        );
+    }
+
+    #[test]
+    fn escapes_link_label_and_url_attribute() {
+        assert_eq!(
+            parse(r#"Visit [<Rust>](https://example.com/?q="rust"&page=1)"#),
+            "<p>Visit <a href=\"https://example.com/?q=&quot;rust&quot;&amp;page=1\">&lt;Rust&gt;</a></p>"
+        );
+    }
+
+    #[test]
+    fn leaves_incomplete_link_as_text() {
+        assert_eq!(
+            parse("Visit [Rust](https://www.rust-lang.org/"),
+            "<p>Visit [Rust](https://www.rust-lang.org/</p>"
         );
     }
 }
