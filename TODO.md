@@ -80,9 +80,9 @@ Markdown compatibility.
   - Learning: enums and data modeling in Rust.
 - [x] Introduce simple inline node types for text, code, emphasis, strong emphasis, and links.
   - Learning: nested data structures.
-- [ ] Separate block parsing from inline parsing.
+- [x] Separate block parsing from inline parsing.
   - Learning: module boundaries and parser responsibilities.
-- [ ] Refactor tests around the new structure.
+- [x] Refactor tests around the new structure.
 
 ## Phase 8: HTML Renderer Basics
 
