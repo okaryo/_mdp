@@ -100,7 +100,8 @@ Markdown compatibility.
 - [x] Document the supported Markdown subset.
 - [ ] Add a small CLI if it helps practice input and output handling.
 - [ ] Compare behavior against a few CommonMark examples without aiming for full compatibility.
-- [ ] Review the implementation and simplify names, modules, and tests.
+- [x] Review the implementation and simplify names, modules, and tests.
+  - Progress: module responsibilities reviewed; `parse` now delegates directly to parser and renderer.
 
 ## Per-Step Template
 

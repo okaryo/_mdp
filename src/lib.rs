@@ -6,10 +6,6 @@ mod renderer;
 ///
 /// Plain text is currently rendered as a single HTML paragraph.
 pub fn parse(markdown: &str) -> String {
-    if markdown.is_empty() {
-        return String::new();
-    }
-
     renderer::render_blocks(&block::parse_blocks(markdown))
 }
 
