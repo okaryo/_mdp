@@ -1,5 +1,6 @@
 mod block;
 mod inline;
+mod renderer;
 
 /// Converts Markdown input into HTML output.
 ///
@@ -9,11 +10,7 @@ pub fn parse(markdown: &str) -> String {
         return String::new();
     }
 
-    block::parse_blocks(markdown)
-        .iter()
-        .map(block::render_block)
-        .collect::<Vec<_>>()
-        .join("\n")
+    renderer::render_blocks(&block::parse_blocks(markdown))
 }
 
 #[cfg(test)]

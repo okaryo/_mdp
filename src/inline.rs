@@ -1,9 +1,5 @@
-pub(crate) fn render_inline(text: &str) -> String {
-    render_inline_nodes(&parse_inline_nodes(text))
-}
-
 #[derive(Debug, PartialEq, Eq)]
-enum InlineNode<'a> {
+pub(crate) enum InlineNode<'a> {
     Text(&'a str),
     Code(String),
     Emphasis(Vec<InlineNode<'a>>),
@@ -14,7 +10,7 @@ enum InlineNode<'a> {
     },
 }
 
-fn parse_inline_nodes(text: &str) -> Vec<InlineNode<'_>> {
+pub(crate) fn parse_inline_nodes(text: &str) -> Vec<InlineNode<'_>> {
     let mut nodes = Vec::new();
     let mut remaining = text;
 
@@ -108,40 +104,6 @@ fn parse_inline_nodes(text: &str) -> Vec<InlineNode<'_>> {
     }
 
     nodes
-}
-
-fn render_inline_nodes(nodes: &[InlineNode<'_>]) -> String {
-    let mut rendered = String::new();
-
-    for node in nodes {
-        match node {
-            InlineNode::Text(text) => rendered.push_str(&escape_html(text)),
-            InlineNode::Code(code) => {
-                rendered.push_str("<code>");
-                rendered.push_str(&escape_html(code));
-                rendered.push_str("</code>");
-            }
-            InlineNode::Emphasis(children) => {
-                rendered.push_str("<em>");
-                rendered.push_str(&render_inline_nodes(children));
-                rendered.push_str("</em>");
-            }
-            InlineNode::Strong(children) => {
-                rendered.push_str("<strong>");
-                rendered.push_str(&render_inline_nodes(children));
-                rendered.push_str("</strong>");
-            }
-            InlineNode::Link { label, url } => {
-                rendered.push_str("<a href=\"");
-                rendered.push_str(&escape_html_attribute(url));
-                rendered.push_str("\">");
-                rendered.push_str(&render_inline_nodes(label));
-                rendered.push_str("</a>");
-            }
-        }
-    }
-
-    rendered
 }
 
 fn find_next_inline_delimiter(text: &str) -> Option<(usize, char)> {
@@ -243,37 +205,6 @@ fn inline_token_len(token: &InlineToken<'_>) -> usize {
         | InlineToken::CloseParen => 1,
         InlineToken::End => 0,
     }
-}
-
-pub(crate) fn escape_html(text: &str) -> String {
-    let mut escaped = String::new();
-
-    for character in text.chars() {
-        match character {
-            '&' => escaped.push_str("&amp;"),
-            '<' => escaped.push_str("&lt;"),
-            '>' => escaped.push_str("&gt;"),
-            _ => escaped.push(character),
-        }
-    }
-
-    escaped
-}
-
-fn escape_html_attribute(text: &str) -> String {
-    let mut escaped = String::new();
-
-    for character in text.chars() {
-        match character {
-            '&' => escaped.push_str("&amp;"),
-            '"' => escaped.push_str("&quot;"),
-            '<' => escaped.push_str("&lt;"),
-            '>' => escaped.push_str("&gt;"),
-            _ => escaped.push(character),
-        }
-    }
-
-    escaped
 }
 
 #[cfg(test)]

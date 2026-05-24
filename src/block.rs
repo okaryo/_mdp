@@ -1,5 +1,3 @@
-use crate::inline::{escape_html, render_inline};
-
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum BlockNode<'a> {
     Paragraph(&'a str),
@@ -78,42 +76,6 @@ pub(crate) fn parse_blocks(markdown: &str) -> Vec<BlockNode<'_>> {
     }
 
     blocks
-}
-
-pub(crate) fn render_block(block: &BlockNode<'_>) -> String {
-    match block {
-        BlockNode::Paragraph(text) => format!("<p>{}</p>", render_inline(text)),
-        BlockNode::Heading { level, text } => {
-            format!("<h{level}>{}</h{level}>", render_inline(text))
-        }
-        BlockNode::UnorderedList(items) => {
-            let rendered_items = items
-                .iter()
-                .map(|item| format!("<li>{}</li>", render_inline(item)))
-                .collect::<Vec<_>>()
-                .join("");
-            format!("<ul>{rendered_items}</ul>")
-        }
-        BlockNode::OrderedList(items) => {
-            let rendered_items = items
-                .iter()
-                .map(|item| format!("<li>{}</li>", render_inline(item)))
-                .collect::<Vec<_>>()
-                .join("");
-            format!("<ol>{rendered_items}</ol>")
-        }
-        BlockNode::BlockQuote(lines) => {
-            let rendered_lines = lines
-                .iter()
-                .map(|line| render_inline(line))
-                .collect::<Vec<_>>()
-                .join("\n");
-            format!("<blockquote><p>{rendered_lines}</p></blockquote>")
-        }
-        BlockNode::CodeBlock(lines) => {
-            format!("<pre><code>{}</code></pre>", escape_html(&lines.join("\n")))
-        }
-    }
 }
 
 fn ordered_list_item_content(line: &str) -> Option<&str> {

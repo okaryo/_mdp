@@ -86,13 +86,13 @@ Markdown compatibility.
 
 ## Phase 8: HTML Renderer Basics
 
-- [ ] Introduce a renderer that converts AST nodes into HTML.
+- [x] Introduce a renderer that converts AST nodes into HTML.
   - Learning: separating parsing from output generation.
-- [ ] Move HTML escaping into the renderer.
+- [x] Move HTML escaping into the renderer.
   - Learning: output safety and responsibility boundaries.
-- [ ] Add renderer-specific tests.
+- [x] Add renderer-specific tests.
   - Learning: testing parser and renderer behavior separately.
-- [ ] Keep an integration test for Markdown input to HTML output.
+- [x] Keep an integration test for Markdown input to HTML output.
   - Learning: end-to-end behavior checks.
 
 ## Phase 9: Review and Stretch Goals
