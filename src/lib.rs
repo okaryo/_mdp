@@ -127,22 +127,31 @@ fn render_inline(text: &str) -> String {
             }
             '*' => {
                 if remaining[start..].starts_with("**") {
-                    rendered.push_str("*");
-                    remaining = &remaining[start + 1..];
-                    continue;
-                }
+                    remaining = &remaining[start + 2..];
 
-                remaining = &remaining[start + 1..];
-
-                if let Some(end) = remaining.find('*') {
-                    rendered.push_str("<em>");
-                    rendered.push_str(&escape_html(&remaining[..end]));
-                    rendered.push_str("</em>");
-                    remaining = &remaining[end + 1..];
+                    if let Some(end) = remaining.find("**") {
+                        rendered.push_str("<strong>");
+                        rendered.push_str(&escape_html(&remaining[..end]));
+                        rendered.push_str("</strong>");
+                        remaining = &remaining[end + 2..];
+                    } else {
+                        rendered.push_str("**");
+                        rendered.push_str(&escape_html(remaining));
+                        return rendered;
+                    }
                 } else {
-                    rendered.push_str("*");
-                    rendered.push_str(&escape_html(remaining));
-                    return rendered;
+                    remaining = &remaining[start + 1..];
+
+                    if let Some(end) = remaining.find('*') {
+                        rendered.push_str("<em>");
+                        rendered.push_str(&escape_html(&remaining[..end]));
+                        rendered.push_str("</em>");
+                        remaining = &remaining[end + 1..];
+                    } else {
+                        rendered.push_str("*");
+                        rendered.push_str(&escape_html(remaining));
+                        return rendered;
+                    }
                 }
             }
             _ => unreachable!("only configured inline delimiters are returned"),
@@ -346,6 +355,27 @@ let value = 1 < 2;
         assert_eq!(
             parse("Use `cargo test` and *learn*"),
             "<p>Use <code>cargo test</code> and <em>learn</em></p>"
+        );
+    }
+
+    #[test]
+    fn renders_strong_emphasis_in_paragraph() {
+        assert_eq!(
+            parse("Keep **learning** Rust"),
+            "<p>Keep <strong>learning</strong> Rust</p>"
+        );
+    }
+
+    #[test]
+    fn leaves_unclosed_strong_emphasis_as_text() {
+        assert_eq!(parse("Keep **learning Rust"), "<p>Keep **learning Rust</p>");
+    }
+
+    #[test]
+    fn renders_strong_emphasis_before_emphasis_when_it_appears_first() {
+        assert_eq!(
+            parse("Keep **learning** and *practicing*"),
+            "<p>Keep <strong>learning</strong> and <em>practicing</em></p>"
         );
     }
 }

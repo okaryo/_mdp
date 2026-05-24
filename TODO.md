@@ -57,12 +57,12 @@ Markdown compatibility.
   - Learning: scanning within a line.
 - [x] Parse emphasis with `*text*`.
   - Learning: delimiter matching, edge cases, and finding the next inline delimiter.
-- [ ] Parse strong emphasis with `**text**`.
+- [x] Parse strong emphasis with `**text**`.
   - Learning: precedence between similar delimiters.
 - [ ] Parse links with `[text](url)`.
   - Learning: nested scanning and validation.
 - [ ] Add focused tests for each inline feature.
-  - Progress: inline code and emphasis tests added.
+  - Progress: inline code, emphasis, and strong emphasis tests added.
 
 ## Phase 6: Tokenizer Basics
 
