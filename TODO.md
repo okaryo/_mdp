@@ -70,7 +70,7 @@ Markdown compatibility.
   - Learning: turning raw text into simple tokens.
 - [x] Define token types for plain text, backticks, stars, brackets, parentheses, and end of input.
   - Learning: enums and explicit parser input.
-- [ ] Rewrite one inline feature to read from tokens instead of raw string scanning.
+- [x] Rewrite one inline feature to read from tokens instead of raw string scanning.
   - Learning: the relationship between tokenizer and parser.
 - [x] Add tests for tokenizer output.
 

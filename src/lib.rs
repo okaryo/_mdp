@@ -112,15 +112,16 @@ fn render_inline(text: &str) -> String {
 
         match delimiter {
             '`' => {
-                remaining = &remaining[start + 1..];
+                let inline_code_input = &remaining[start..];
 
-                if let Some(end) = remaining.find('`') {
-                    rendered.push_str("<code>");
-                    rendered.push_str(&escape_html(&remaining[..end]));
-                    rendered.push_str("</code>");
-                    remaining = &remaining[end + 1..];
+                if let Some((html, consumed_len)) =
+                    render_inline_code_from_tokens(inline_code_input)
+                {
+                    rendered.push_str(&html);
+                    remaining = &remaining[start + consumed_len..];
                 } else {
                     rendered.push_str("`");
+                    remaining = &remaining[start + 1..];
                     rendered.push_str(&escape_html(remaining));
                     return rendered;
                 }
@@ -193,7 +194,6 @@ fn find_next_inline_delimiter(text: &str) -> Option<(usize, char)> {
         .find(|(_, character)| matches!(character, '`' | '*' | '['))
 }
 
-#[allow(dead_code)]
 #[derive(Debug, PartialEq, Eq)]
 enum InlineToken<'a> {
     Text(&'a str),
@@ -206,7 +206,6 @@ enum InlineToken<'a> {
     End,
 }
 
-#[allow(dead_code)]
 fn tokenize_inline(text: &str) -> Vec<InlineToken<'_>> {
     let mut tokens = Vec::new();
     let mut text_start = 0;
@@ -236,6 +235,59 @@ fn tokenize_inline(text: &str) -> Vec<InlineToken<'_>> {
 
     tokens.push(InlineToken::End);
     tokens
+}
+
+fn render_inline_code_from_tokens(text: &str) -> Option<(String, usize)> {
+    let tokens = tokenize_inline(text);
+
+    if !matches!(tokens.first(), Some(InlineToken::Backtick)) {
+        return None;
+    }
+
+    let mut code = String::new();
+    let mut consumed_len = 1;
+
+    for token in tokens.iter().skip(1) {
+        match token {
+            InlineToken::Backtick => {
+                consumed_len += 1;
+                return Some((format!("<code>{}</code>", escape_html(&code)), consumed_len));
+            }
+            InlineToken::End => return None,
+            _ => {
+                code.push_str(&inline_token_text(token));
+                consumed_len += inline_token_len(token);
+            }
+        }
+    }
+
+    None
+}
+
+fn inline_token_text(token: &InlineToken<'_>) -> String {
+    match token {
+        InlineToken::Text(text) => text.to_string(),
+        InlineToken::Backtick => "`".to_string(),
+        InlineToken::Star => "*".to_string(),
+        InlineToken::OpenBracket => "[".to_string(),
+        InlineToken::CloseBracket => "]".to_string(),
+        InlineToken::OpenParen => "(".to_string(),
+        InlineToken::CloseParen => ")".to_string(),
+        InlineToken::End => String::new(),
+    }
+}
+
+fn inline_token_len(token: &InlineToken<'_>) -> usize {
+    match token {
+        InlineToken::Text(text) => text.len(),
+        InlineToken::Backtick
+        | InlineToken::Star
+        | InlineToken::OpenBracket
+        | InlineToken::CloseBracket
+        | InlineToken::OpenParen
+        | InlineToken::CloseParen => 1,
+        InlineToken::End => 0,
+    }
 }
 
 fn escape_html(text: &str) -> String {
@@ -421,6 +473,14 @@ let value = 1 < 2;
         assert_eq!(
             parse("Use `<tag>` as text"),
             "<p>Use <code>&lt;tag&gt;</code> as text</p>"
+        );
+    }
+
+    #[test]
+    fn treats_inline_markdown_delimiters_as_text_inside_inline_code() {
+        assert_eq!(
+            parse("Use `*not emphasis* [link](url)`"),
+            "<p>Use <code>*not emphasis* [link](url)</code></p>"
         );
     }
 
