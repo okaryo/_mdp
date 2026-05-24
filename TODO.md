@@ -66,13 +66,13 @@ Markdown compatibility.
 
 ## Phase 6: Tokenizer Basics
 
-- [ ] Introduce a small tokenizer for inline syntax.
+- [x] Introduce a small tokenizer for inline syntax.
   - Learning: turning raw text into simple tokens.
-- [ ] Define token types for plain text, backticks, stars, brackets, parentheses, and end of input.
+- [x] Define token types for plain text, backticks, stars, brackets, parentheses, and end of input.
   - Learning: enums and explicit parser input.
 - [ ] Rewrite one inline feature to read from tokens instead of raw string scanning.
   - Learning: the relationship between tokenizer and parser.
-- [ ] Add tests for tokenizer output.
+- [x] Add tests for tokenizer output.
 
 ## Phase 7: AST Basics
 

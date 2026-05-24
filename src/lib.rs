@@ -193,6 +193,51 @@ fn find_next_inline_delimiter(text: &str) -> Option<(usize, char)> {
         .find(|(_, character)| matches!(character, '`' | '*' | '['))
 }
 
+#[allow(dead_code)]
+#[derive(Debug, PartialEq, Eq)]
+enum InlineToken<'a> {
+    Text(&'a str),
+    Backtick,
+    Star,
+    OpenBracket,
+    CloseBracket,
+    OpenParen,
+    CloseParen,
+    End,
+}
+
+#[allow(dead_code)]
+fn tokenize_inline(text: &str) -> Vec<InlineToken<'_>> {
+    let mut tokens = Vec::new();
+    let mut text_start = 0;
+
+    for (index, character) in text.char_indices() {
+        let token = match character {
+            '`' => InlineToken::Backtick,
+            '*' => InlineToken::Star,
+            '[' => InlineToken::OpenBracket,
+            ']' => InlineToken::CloseBracket,
+            '(' => InlineToken::OpenParen,
+            ')' => InlineToken::CloseParen,
+            _ => continue,
+        };
+
+        if text_start < index {
+            tokens.push(InlineToken::Text(&text[text_start..index]));
+        }
+
+        tokens.push(token);
+        text_start = index + character.len_utf8();
+    }
+
+    if text_start < text.len() {
+        tokens.push(InlineToken::Text(&text[text_start..]));
+    }
+
+    tokens.push(InlineToken::End);
+    tokens
+}
+
 fn escape_html(text: &str) -> String {
     let mut escaped = String::new();
 
@@ -442,6 +487,49 @@ let value = 1 < 2;
         assert_eq!(
             parse("Visit [Rust](https://www.rust-lang.org/"),
             "<p>Visit [Rust](https://www.rust-lang.org/</p>"
+        );
+    }
+
+    #[test]
+    fn tokenizes_inline_syntax_delimiters() {
+        assert_eq!(
+            tokenize_inline("Use `code` and [Rust](url)"),
+            vec![
+                InlineToken::Text("Use "),
+                InlineToken::Backtick,
+                InlineToken::Text("code"),
+                InlineToken::Backtick,
+                InlineToken::Text(" and "),
+                InlineToken::OpenBracket,
+                InlineToken::Text("Rust"),
+                InlineToken::CloseBracket,
+                InlineToken::OpenParen,
+                InlineToken::Text("url"),
+                InlineToken::CloseParen,
+                InlineToken::End,
+            ]
+        );
+    }
+
+    #[test]
+    fn tokenizes_plain_text_as_one_text_token() {
+        assert_eq!(
+            tokenize_inline("plain text"),
+            vec![InlineToken::Text("plain text"), InlineToken::End]
+        );
+    }
+
+    #[test]
+    fn tokenizes_multibyte_text_without_splitting_characters() {
+        assert_eq!(
+            tokenize_inline("Rustは*楽しい*"),
+            vec![
+                InlineToken::Text("Rustは"),
+                InlineToken::Star,
+                InlineToken::Text("楽しい"),
+                InlineToken::Star,
+                InlineToken::End,
+            ]
         );
     }
 }
