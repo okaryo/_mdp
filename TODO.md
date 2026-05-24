@@ -76,7 +76,7 @@ Markdown compatibility.
 
 ## Phase 7: AST Basics
 
-- [ ] Introduce simple block node types when string-only parsing becomes awkward.
+- [x] Introduce simple block node types when string-only parsing becomes awkward.
   - Learning: enums and data modeling in Rust.
 - [ ] Introduce simple inline node types for text, code, emphasis, strong emphasis, and links.
   - Learning: nested data structures.

@@ -6,6 +6,24 @@ pub fn parse(markdown: &str) -> String {
         return String::new();
     }
 
+    parse_blocks(markdown)
+        .iter()
+        .map(render_block)
+        .collect::<Vec<_>>()
+        .join("\n")
+}
+
+#[derive(Debug, PartialEq, Eq)]
+enum BlockNode<'a> {
+    Paragraph(&'a str),
+    Heading { level: u8, text: &'a str },
+    UnorderedList(Vec<&'a str>),
+    OrderedList(Vec<&'a str>),
+    BlockQuote(Vec<&'a str>),
+    CodeBlock(Vec<&'a str>),
+}
+
+fn parse_blocks(markdown: &str) -> Vec<BlockNode<'_>> {
     let lines = markdown.lines().collect::<Vec<_>>();
     let mut blocks = Vec::new();
     let mut index = 0;
@@ -26,59 +44,53 @@ pub fn parse(markdown: &str) -> String {
                 index += 1;
             }
 
-            blocks.push(format!(
-                "<pre><code>{}</code></pre>",
-                escape_html(&code_lines.join("\n"))
-            ));
+            blocks.push(BlockNode::CodeBlock(code_lines));
         } else if line.strip_prefix("- ").is_some() {
             let mut items = Vec::new();
 
             while index < lines.len() {
                 if let Some(item) = lines[index].strip_prefix("- ") {
-                    items.push(format!("<li>{}</li>", render_inline(item)));
+                    items.push(item);
                     index += 1;
                 } else {
                     break;
                 }
             }
 
-            blocks.push(format!("<ul>{}</ul>", items.join("")));
+            blocks.push(BlockNode::UnorderedList(items));
         } else if ordered_list_item_content(line).is_some() {
             let mut items = Vec::new();
 
             while index < lines.len() {
                 if let Some(item) = ordered_list_item_content(lines[index]) {
-                    items.push(format!("<li>{}</li>", render_inline(item)));
+                    items.push(item);
                     index += 1;
                 } else {
                     break;
                 }
             }
 
-            blocks.push(format!("<ol>{}</ol>", items.join("")));
+            blocks.push(BlockNode::OrderedList(items));
         } else if line.strip_prefix("> ").is_some() {
             let mut quoted_lines = Vec::new();
 
             while index < lines.len() {
                 if let Some(quote) = lines[index].strip_prefix("> ") {
-                    quoted_lines.push(render_inline(quote));
+                    quoted_lines.push(quote);
                     index += 1;
                 } else {
                     break;
                 }
             }
 
-            blocks.push(format!(
-                "<blockquote><p>{}</p></blockquote>",
-                quoted_lines.join("\n")
-            ));
+            blocks.push(BlockNode::BlockQuote(quoted_lines));
         } else {
             blocks.push(parse_line(line));
             index += 1;
         }
     }
 
-    blocks.join("\n")
+    blocks
 }
 
 fn ordered_list_item_content(line: &str) -> Option<&str> {
@@ -91,15 +103,60 @@ fn ordered_list_item_content(line: &str) -> Option<&str> {
     }
 }
 
-fn parse_line(line: &str) -> String {
+fn parse_line(line: &str) -> BlockNode<'_> {
     if let Some(heading) = line.strip_prefix("### ") {
-        format!("<h3>{}</h3>", render_inline(heading))
+        BlockNode::Heading {
+            level: 3,
+            text: heading,
+        }
     } else if let Some(heading) = line.strip_prefix("## ") {
-        format!("<h2>{}</h2>", render_inline(heading))
+        BlockNode::Heading {
+            level: 2,
+            text: heading,
+        }
     } else if let Some(heading) = line.strip_prefix("# ") {
-        format!("<h1>{}</h1>", render_inline(heading))
+        BlockNode::Heading {
+            level: 1,
+            text: heading,
+        }
     } else {
-        format!("<p>{}</p>", render_inline(line))
+        BlockNode::Paragraph(line)
+    }
+}
+
+fn render_block(block: &BlockNode<'_>) -> String {
+    match block {
+        BlockNode::Paragraph(text) => format!("<p>{}</p>", render_inline(text)),
+        BlockNode::Heading { level, text } => {
+            format!("<h{level}>{}</h{level}>", render_inline(text))
+        }
+        BlockNode::UnorderedList(items) => {
+            let rendered_items = items
+                .iter()
+                .map(|item| format!("<li>{}</li>", render_inline(item)))
+                .collect::<Vec<_>>()
+                .join("");
+            format!("<ul>{rendered_items}</ul>")
+        }
+        BlockNode::OrderedList(items) => {
+            let rendered_items = items
+                .iter()
+                .map(|item| format!("<li>{}</li>", render_inline(item)))
+                .collect::<Vec<_>>()
+                .join("");
+            format!("<ol>{rendered_items}</ol>")
+        }
+        BlockNode::BlockQuote(lines) => {
+            let rendered_lines = lines
+                .iter()
+                .map(|line| render_inline(line))
+                .collect::<Vec<_>>()
+                .join("\n");
+            format!("<blockquote><p>{rendered_lines}</p></blockquote>")
+        }
+        BlockNode::CodeBlock(lines) => {
+            format!("<pre><code>{}</code></pre>", escape_html(&lines.join("\n")))
+        }
     }
 }
 
@@ -328,6 +385,22 @@ mod tests {
     #[test]
     fn parses_empty_document() {
         assert_eq!(parse(""), "");
+    }
+
+    #[test]
+    fn parses_blocks_into_block_nodes() {
+        assert_eq!(
+            parse_blocks("# Title\n- Apples\n- Oranges\n``` \nnot a fence"),
+            vec![
+                BlockNode::Heading {
+                    level: 1,
+                    text: "Title"
+                },
+                BlockNode::UnorderedList(vec!["Apples", "Oranges"]),
+                BlockNode::Paragraph("``` "),
+                BlockNode::Paragraph("not a fence"),
+            ]
+        );
     }
 
     #[test]
