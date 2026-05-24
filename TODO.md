@@ -100,7 +100,7 @@ Markdown compatibility.
 - [x] Document the supported Markdown subset.
 - [x] Add a small CLI if it helps practice input and output handling.
   - Learning: binary crate entry point, CLI arguments, file input, stdin, and basic error handling.
-- [ ] Compare behavior against a few CommonMark examples without aiming for full compatibility.
+- [x] Compare behavior against a few CommonMark examples without aiming for full compatibility.
 - [x] Review the implementation and simplify names, modules, and tests.
   - Progress: module responsibilities reviewed; `parse` now delegates directly to parser and renderer.
 

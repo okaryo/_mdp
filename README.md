@@ -49,6 +49,26 @@ This parser is intentionally incomplete. Current limitations include:
   cases.
 - Links do not support nested brackets or URLs containing `)`.
 
+## CommonMark Comparison Notes
+
+This project uses CommonMark as a useful reference, not as a compatibility
+target. A few examples:
+
+| Markdown input | CommonMark-style expectation | Current `_mdp` behavior |
+| --- | --- | --- |
+| `# Title` | Level 1 heading | Supported |
+| `#### Title` | Level 4 heading | Rendered as a paragraph |
+| `- item` | Unordered list | Supported |
+| `- item` with nested `  - child` | Nested list | Nested lists are not supported |
+| <code>```rust</code> | Fenced code block with language info | Not supported as a code fence |
+| <code>```</code> without closing fence | Code block handling depends on parser rules | Treated as code until end of input |
+| Blank-line-separated paragraph text | Paragraph grouping | Blank-line grouping is not implemented |
+| `[label](https://example.com/a(b))` | Link URL may contain balanced parentheses | URL parsing stops at the first `)` |
+
+These differences are intentional for now. They make the parser small enough to
+support step-by-step learning while still exercising tokenizer, parser, AST, and
+renderer concepts.
+
 ## Architecture
 
 The implementation is split into small learning-oriented modules:
