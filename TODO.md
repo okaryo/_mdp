@@ -103,6 +103,8 @@ Markdown compatibility.
 - [x] Compare behavior against a few CommonMark examples without aiming for full compatibility.
 - [x] Review the implementation and simplify names, modules, and tests.
   - Progress: module responsibilities reviewed; `parse` now delegates directly to parser and renderer.
+- [x] Add an integration test with a larger Markdown fixture.
+  - Learning: integration tests, fixtures, and end-to-end behavior.
 
 ## Per-Step Template
 
