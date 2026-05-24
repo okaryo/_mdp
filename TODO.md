@@ -97,7 +97,7 @@ Markdown compatibility.
 
 ## Phase 9: Review and Stretch Goals
 
-- [ ] Document the supported Markdown subset.
+- [x] Document the supported Markdown subset.
 - [ ] Add a small CLI if it helps practice input and output handling.
 - [ ] Compare behavior against a few CommonMark examples without aiming for full compatibility.
 - [ ] Review the implementation and simplify names, modules, and tests.
