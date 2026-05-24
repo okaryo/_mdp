@@ -107,24 +107,55 @@ fn render_inline(text: &str) -> String {
     let mut rendered = String::new();
     let mut remaining = text;
 
-    while let Some(start) = remaining.find('`') {
+    while let Some((start, delimiter)) = find_next_inline_delimiter(remaining) {
         rendered.push_str(&escape_html(&remaining[..start]));
-        remaining = &remaining[start + 1..];
 
-        if let Some(end) = remaining.find('`') {
-            rendered.push_str("<code>");
-            rendered.push_str(&escape_html(&remaining[..end]));
-            rendered.push_str("</code>");
-            remaining = &remaining[end + 1..];
-        } else {
-            rendered.push_str("`");
-            rendered.push_str(&escape_html(remaining));
-            return rendered;
+        match delimiter {
+            '`' => {
+                remaining = &remaining[start + 1..];
+
+                if let Some(end) = remaining.find('`') {
+                    rendered.push_str("<code>");
+                    rendered.push_str(&escape_html(&remaining[..end]));
+                    rendered.push_str("</code>");
+                    remaining = &remaining[end + 1..];
+                } else {
+                    rendered.push_str("`");
+                    rendered.push_str(&escape_html(remaining));
+                    return rendered;
+                }
+            }
+            '*' => {
+                if remaining[start..].starts_with("**") {
+                    rendered.push_str("*");
+                    remaining = &remaining[start + 1..];
+                    continue;
+                }
+
+                remaining = &remaining[start + 1..];
+
+                if let Some(end) = remaining.find('*') {
+                    rendered.push_str("<em>");
+                    rendered.push_str(&escape_html(&remaining[..end]));
+                    rendered.push_str("</em>");
+                    remaining = &remaining[end + 1..];
+                } else {
+                    rendered.push_str("*");
+                    rendered.push_str(&escape_html(remaining));
+                    return rendered;
+                }
+            }
+            _ => unreachable!("only configured inline delimiters are returned"),
         }
     }
 
     rendered.push_str(&escape_html(remaining));
     rendered
+}
+
+fn find_next_inline_delimiter(text: &str) -> Option<(usize, char)> {
+    text.char_indices()
+        .find(|(_, character)| matches!(character, '`' | '*'))
 }
 
 fn escape_html(text: &str) -> String {
@@ -294,6 +325,27 @@ let value = 1 < 2;
         assert_eq!(
             parse("Use `<tag>` as text"),
             "<p>Use <code>&lt;tag&gt;</code> as text</p>"
+        );
+    }
+
+    #[test]
+    fn renders_emphasis_in_paragraph() {
+        assert_eq!(
+            parse("Keep *learning* Rust"),
+            "<p>Keep <em>learning</em> Rust</p>"
+        );
+    }
+
+    #[test]
+    fn leaves_unclosed_emphasis_as_text() {
+        assert_eq!(parse("Keep *learning Rust"), "<p>Keep *learning Rust</p>");
+    }
+
+    #[test]
+    fn renders_inline_code_before_emphasis_when_it_appears_first() {
+        assert_eq!(
+            parse("Use `cargo test` and *learn*"),
+            "<p>Use <code>cargo test</code> and <em>learn</em></p>"
         );
     }
 }
